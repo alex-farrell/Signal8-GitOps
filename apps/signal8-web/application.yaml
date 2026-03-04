@@ -9,7 +9,7 @@ spec:
   sources:
     - repoURL: ssh://git@gitlab.home.arpa:2222/signal8/signal8-web.git
       targetRevision: master
-      path: signal8-web
+      path: deploy/signal8-web
       helm:
         releaseName: signal8-web
         valueFiles:

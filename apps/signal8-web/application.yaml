@@ -4,7 +4,7 @@ metadata:
   name: signal8-web
   namespace: argocd
 spec:
-  project: default
+  project: signal8
 
   sources:
     - repoURL: ssh://git@gitlab.home.arpa:2222/signal8/signal8-web.git

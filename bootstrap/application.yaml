@@ -4,7 +4,7 @@ metadata:
   name: signal8-bootstrap
   namespace: argocd
 spec:
-  project: signal8
+  project: default
 
   source:
     repoURL: ssh://git@gitlab.home.arpa:2222/signal8/signal8-gitops.git

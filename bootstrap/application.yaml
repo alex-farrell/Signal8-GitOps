@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: signal8-bootstrap
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: ssh://git@gitlab.home.arpa:2222/signal8/signal8-gitops.git
+    targetRevision: master
+
+    # This points at the folder that contains your app definitions:
+    # /apps/signal8-web/application.yaml
+    path: apps
+
+    # Treat the folder as a directory of YAML manifests (recurse into subfolders)
+    directory:
+      recurse: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

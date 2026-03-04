@@ -1,0 +1,22 @@
+image:
+  repository: registry.gitlab.home.arpa/signal8/signal8-web
+  # CI will update this to a specific SHA each deploy
+  tag: latest
+
+imagePullSecrets:
+  enabled: true
+  name: signal8-web-regcred
+  create: true
+
+gateway:
+  enabled: true
+  name: main-gateway
+  namespace: gateway-system
+  sectionName: https
+  hostname: signal8.home.arpa
+
+service:
+  type: ClusterIP
+  port: 80
+
+replicaCount: 1

@@ -1,7 +1,7 @@
 image:
   repository: registry.gitlab.home.arpa/signal8/signal8-web
   # CI will update this to a specific SHA each deploy
-  tag: 45fefde69a3376f8fb455d689509ff3fb0356050
+  tag: be5ae410f7e8b29c0cf23ccb21f63e70b8422d16
 
 imagePullSecrets:
   enabled: true

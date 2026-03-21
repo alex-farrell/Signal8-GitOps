@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: signal8-universe-source
+  namespace: argocd
+spec:
+  project: signal8
+
+  sources:
+    - repoURL: ssh://git@gitlab.home.arpa:2222/signal8/signal8-universe-source.git
+      targetRevision: master
+      path: deploy/signal8-universe-source
+      helm:
+        releaseName: signal8-universe-source
+        valueFiles:
+          - $values/apps/signal8-universe-source/values.yaml
+
+    - repoURL: ssh://git@gitlab.home.arpa:2222/signal8/signal8-gitops.git
+      targetRevision: master
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: signal8
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

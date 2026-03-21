@@ -1,0 +1,169 @@
+# ==============================================================================
+# Argo CD override values for signal8-universe-source
+# Path: apps/signal8-universe-source/values.yaml
+# ==============================================================================
+#
+# This file contains environment-specific overrides for the
+# charts/signal8-universe-source Helm chart.
+#
+# Intended deployment model:
+#   - managed by Argo CD from the signal8-gitops repository
+#   - image pulled from the GitLab container registry
+#   - CI updates the image tag to a specific commit SHA on each deploy
+#   - exposed through Gateway API HTTPRoute
+#   - scheduled on any normal schedulable worker node
+#   - uses a shared Step root CA ConfigMap for trust
+#   - uses separate Secrets for image pull credentials and sensitive runtime
+#     values
+# ==============================================================================
+
+replicaCount: 1
+
+image:
+  repository: registry.gitlab.home.arpa/signal8/signal8-universe-source
+  # CI will update this to a specific SHA each deploy
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: main-gateway
+      namespace: gateway-system
+      sectionName: https
+  hostnames:
+    - signal8-universe-source.home.arpa
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs: []
+
+imagePullSecrets:
+  enabled: true
+  name: signal8-universe-source-regcred
+  create: true
+  registry: registry.gitlab.home.arpa
+  username: argocd-bot
+  password: "7q6bwdNYqQv3512M"
+  email: "devops@alexfarrell.app"
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+config:
+  appEnv: "prod"
+  logLevel: "info"
+  httpTimeout: "15s"
+
+  provider: "twelvedata"
+  twelveDataBaseURL: "https://api.twelvedata.com"
+
+  syncSymbols: true
+  syncExchanges: true
+  exchangeFilter: ""
+  countryFilter: "United States"
+
+  natsServers:
+    - "tls://nats-01.home.arpa:4222"
+    - "tls://nats-02.home.arpa:4222"
+    - "tls://nats-03.home.arpa:4222"
+
+  natsName: "signal8-universe-source"
+  natsSymbolSubject: "signal8.universe.symbol.discovery"
+  natsExchangeSubject: "signal8.universe.exchange.discovery"
+  natsTransport: "jetstream"
+
+  # Enable asynchronous publishing for JetStream.
+  #
+  # false => wait for ack on every publish
+  # true  => buffer publishes and rely on Flush()
+  #
+  # Ignored when natsTransport=nats.
+  jetstreamAsyncPublish: false
+
+  # ----------------------------------------------------------------------------
+  # JetStream stream configuration
+  # ----------------------------------------------------------------------------
+  natsJSStream: "SIGNAL8_UNIVERSE"
+  natsJSReplicas: 1
+  natsJSStorage: "file"
+  natsJSDuplicateWindow: "2m"
+  natsJSRetentionMaxAge: "24h"
+
+  # ----------------------------------------------------------------------------
+  # NATS TLS configuration
+  # ----------------------------------------------------------------------------
+  natsTLS:
+    enabled: true
+
+    # Override server name used for TLS verification.
+    # Must match certificate SAN (Subject Alternative Name).
+    serverName: "nats-01.home.arpa"
+
+    insecureSkipVerify: false
+    caFile: "/etc/ssl/step-root-ca/ca.crt"
+    certFile: ""
+    keyFile: ""
+
+  # ----------------------------------------------------------------------------
+  # Sync execution behavior
+  # ----------------------------------------------------------------------------
+  processChunkSize: 500
+  processChunkInterval: "2s"
+  syncInterval: "6h"
+  periodicSync: true
+  dryRun: false
+  publishBatchSize: 250
+
+  # ----------------------------------------------------------------------------
+  # Provider retry behavior
+  # ----------------------------------------------------------------------------
+  providerRetryAttempts: 3
+  providerRetryBaseDelay: "2s"
+
+secret:
+  create: true
+
+  # Use chart-managed Secret values for this environment.
+  existingSecret: ""
+
+  twelveDataApiKey: "63c4616e9ec54194afdc0a6526dc3008"
+  natsUsername: "app"
+  natsPassword: "7q6bwdNYqQv3512M"
+
+tlsSecretMount:
+  enabled: false
+  secretName: "signal8-universe-source-nats-tls"
+  mountPath: /tls/nats
+
+stepRootCA:
+  enabled: true
+  configMapName: "step-root-ca-bundle"
+  mountPath: /etc/ssl/step-root-ca
+  fileName: ca.crt
+  envVarName: "NATS_TLS_CA_FILE"
+
+serviceMonitor:
+  enabled: true
+  labels:
+    release: prometheus
+
+# This workload should remain free to run on any normal schedulable worker node.
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+topologySpreadConstraints: []
